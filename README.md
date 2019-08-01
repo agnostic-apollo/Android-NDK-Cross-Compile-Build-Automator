@@ -101,7 +101,7 @@ Set the variable values according to your needs.
 - Depending on you make commands the install directory should contain the files built. This project refers to the install directory as `INSTALL_DIR`. If you are using the same DESTDIR for the make install command as in the template then installed files will be at `$INSTALL_DIR/$PROJECT/$ARCH_SRC` for each PROJECT and ARCH_SRC.
 
 
-Currently tested by building fusermount for android on Ubuntu 16.04 with NDK r15c and r20. You can check it out [here](https://github.com/agnostic-apollo/fuse).
+Currently tested by building fusermount for android on Ubuntu 16.04 x86_64 with NDK r15c and r20. You can check it out [here](https://github.com/agnostic-apollo/fuse).
 
 Credits:  
 [libiconv](https://github.com/palmerc/libiconv)  
