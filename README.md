@@ -21,7 +21,11 @@ Then simply run the android_ndk_cross_compile_build_automator.sh script and it w
 	
 
 - Download Latest `Android NDK` from [here](https://developer.android.com/ndk/downloads) or an older version from [here](https://developer.android.com/ndk/downloads/older_releases). Extract it to a directory. Default is`$HOME/Android/ndk/`.
-- Download a `Android NDK Cross Compile Build Automator` release from [here](). Extract it in any directory.
+
+
+- Download a `Android NDK Cross Compile Build Automator` release from [here](https://github.com/agnostic-apollo/Android-NDK-Cross-Compile-Build-Automator/releases). Extract it in any directory.
+
+
 - The directory structure by default should be something like this:
 ```
 - android_ndk_cross_compile_build_automator

@@ -24,11 +24,11 @@ ARCHS_SRC_TO_BUILD="armeabi armeabi-v7a arm64-v8a x86 x86-64"
 #set the space separated list of project directories in PROJECTS_DIR that you want to build
 #the root of each project directory must contain the BUILD_FILE_NAME file that build and installs the project
 #PROJECTS_TO_BUILD="fuse"
-PROJECTS_TO_BUILD="fuse"
+PROJECTS_TO_BUILD=""
 
 #set the space separated list of post build scripts files in POST_BUILD_SCRIPTS_DIR that you want to run
 #POST_BUILD_SCRIPTS_TO_RUN="fusermount_extractor.sh"
-POST_BUILD_SCRIPTS_TO_RUN="fusermount_extractor.sh"
+POST_BUILD_SCRIPTS_TO_RUN=""
 
 
 #set path to NDK
