@@ -1,0 +1,8 @@
+#If project needs to be built for android 4.0.4 and below
+ARCH=arm
+API_LEVEL=15
+
+CPPFLAGS=""
+CFLAGS="-mthumb -D__ANDROID_API__=$API_LEVEL"
+CXXFLAGS="-mthumb -D__ANDROID_API__=$API_LEVEL"
+LDFLAGS=""

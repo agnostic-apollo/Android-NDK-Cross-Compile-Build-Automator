@@ -1,0 +1,282 @@
+#!/bin/bash
+
+#modified code snippets from:
+#android-ndk-r20/build/ndk-build
+#android-ndk-r20/build/tools/dev-defaults.sh
+
+# Copyright (C) 2010 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# Detect host operating system and architecture
+# The 64-bit / 32-bit distinction gets tricky on Linux and Darwin because
+# uname -m returns the kernel's bit size, and it's possible to run with
+# a 64-bit kernel and a 32-bit userland.
+#
+HOST_OS=$(uname -s)
+case $HOST_OS in
+  Darwin) HOST_OS=darwin;;
+  Linux) HOST_OS=linux;;
+  FreeBsd) HOST_OS=freebsd;;
+  CYGWIN*|*_NT-*) HOST_OS=cygwin;;
+  *) echo "ERROR: Unknown host operating system: $HOST_OS"
+     exit 1
+esac
+echo "HOST_OS=$HOST_OS"
+
+HOST_ARCH=$(uname -m)
+case $HOST_ARCH in
+    i?86) HOST_ARCH=x86;;
+    x86_64|amd64) HOST_ARCH=x86_64;;
+    *) echo "ERROR: Unknown host CPU architecture: $HOST_ARCH"
+       exit 1
+esac
+echo "HOST_ARCH=$HOST_ARCH"
+
+# Detect 32-bit userland on 64-bit kernels
+HOST_TAG="$HOST_OS-$HOST_ARCH"
+case $HOST_TAG in
+  linux-x86_64|darwin-x86_64)
+    # we look for x86_64 or x86-64 in the output of 'file' for our shell
+    # the -L flag is used to dereference symlinks, just in case.
+    file -L "$SHELL" | grep -q "x86[_-]64"
+    if [ $? != 0 ]; then
+      HOST_ARCH=x86
+      echo "HOST_ARCH=$HOST_ARCH (32-bit userland detected)"
+    fi
+    ;;
+esac
+
+# Check that we have 64-bit binaries on 64-bit system, otherwise fallback
+# on 32-bit ones. This gives us more freedom in packaging the NDK.
+LOG_MESSAGE=
+if [ $HOST_ARCH = x86_64 ]; then
+  if [ ! -d $ANDROID_NDK_ROOT/prebuilt/$HOST_TAG ]; then
+    HOST_ARCH=x86
+    LOG_MESSAGE="(no 64-bit prebuilt binaries detected)"
+  fi
+fi
+
+HOST_TAG=$HOST_OS-$HOST_ARCH
+# Special case windows-x86 -> windows
+if [ $HOST_TAG = windows-x86 ]; then
+  HOST_TAG=windows
+fi
+echo "HOST_TAG=$HOST_TAG $LOG_MESSAGE"
+
+
+# Default values used by several dev-scripts.
+#
+
+# This script is imported while building the NDK, while running the tests, and
+# when running make-standalone-toolchain.sh. Check if we have our own platforms
+# tree (as we would in an installed NDK) first, and fall back to prebuilts/ndk.
+PLATFORMS_DIR="$ANDROID_NDK_ROOT/platforms"
+if [ ! -d "$PLATFORMS_DIR" ]; then
+    PLATFORMS_DIR="$ANDROID_NDK_ROOT/../prebuilts/ndk/current/platforms"
+fi
+API_LEVELS="$(ls "$PLATFORMS_DIR" | sed 's/android-//' | sort -n | tr "\n" " " | sed '$s/ $//')"
+
+# The latest API level is the last one in the list.
+LATEST_API_LEVEL=$(echo "$API_LEVELS" | awk '{ print $NF }')
+
+FIRST_API64_LEVEL=21
+
+# Default ABIs for the target prebuilt binaries.
+PREBUILT_ABIS="armeabi armeabi-v7a x86 mips arm64-v8a x86_64 mips64"
+
+
+# NDK 20 only contained the following
+PREBUILT_LLVM_ABIS="armeabi-v7a x86 arm64-v8a x86_64"
+
+# The list of default CPU architectures we support
+SUPPORTED_ARCHS="arm armv7a arm64 x86 x86_64 mips mips64 mips32r6"
+
+# Default toolchain names and prefix
+#
+# This is used by get_default_toolchain_name_for_arch and get_default_toolchain_prefix_for_arch
+# defined below
+DEFAULT_ARCH_TOOLCHAIN_NAME_arm=arm-linux-androideabi
+DEFAULT_ARCH_TOOLCHAIN_PREFIX_arm=arm-linux-androideabi
+
+DEFAULT_ARCH_TOOLCHAIN_NAME_armv7a=armv7a-linux-androideabi
+DEFAULT_ARCH_TOOLCHAIN_PREFIX_armv7a=armv7a-linux-androideabi
+
+DEFAULT_ARCH_TOOLCHAIN_NAME_arm64=aarch64-linux-android
+DEFAULT_ARCH_TOOLCHAIN_PREFIX_arm64=aarch64-linux-android
+
+DEFAULT_ARCH_TOOLCHAIN_NAME_x86=x86
+DEFAULT_ARCH_TOOLCHAIN_PREFIX_x86=i686-linux-android
+
+DEFAULT_ARCH_TOOLCHAIN_NAME_x86_64=x86_64
+DEFAULT_ARCH_TOOLCHAIN_PREFIX_x86_64=x86_64-linux-android
+
+DEFAULT_ARCH_TOOLCHAIN_NAME_mips=mips64el-linux-android
+DEFAULT_ARCH_TOOLCHAIN_PREFIX_mips=mips64el-linux-android
+
+DEFAULT_ARCH_TOOLCHAIN_NAME_mips64=mips64el-linux-android
+DEFAULT_ARCH_TOOLCHAIN_PREFIX_mips64=mips64el-linux-android
+
+
+
+# Default toolchain compiler prefix
+#
+# This is used by get_default_toolchain_compiler_prefix_for_arch
+# defined below
+DEFAULT_ARCH_TOOLCHAIN_COMPILER_PREFIX_arm=arm-linux-androideabi
+DEFAULT_ARCH_TOOLCHAIN_COMPILER_PREFIX_armv7a=armv7a-linux-androideabi
+DEFAULT_ARCH_TOOLCHAIN_COMPILER_PREFIX_arm64=aarch64-linux-android
+DEFAULT_ARCH_TOOLCHAIN_COMPILER_PREFIX_x86=i686-linux-android
+DEFAULT_ARCH_TOOLCHAIN_COMPILER_PREFIX_x86_64=x86_64-linux-android
+DEFAULT_ARCH_TOOLCHAIN_COMPILER_PREFIX_mips=mips64el-linux-android
+DEFAULT_ARCH_TOOLCHAIN_COMPILER_PREFIX_mips64=mips64el-linux-android
+
+# Default toolchain bintools prefix
+#
+# This is used by get_default_toolchain_bintools_prefix_for_arch
+# defined below
+DEFAULT_ARCH_TOOLCHAIN_BINTOOLS_PREFIX_arm=arm-linux-androideabi
+DEFAULT_ARCH_TOOLCHAIN_BINTOOLS_PREFIX_armv7a=arm-linux-androideabi
+DEFAULT_ARCH_TOOLCHAIN_BINTOOLS_PREFIX_arm64=aarch64-linux-android
+DEFAULT_ARCH_TOOLCHAIN_BINTOOLS_PREFIX_x86=i686-linux-android
+DEFAULT_ARCH_TOOLCHAIN_BINTOOLS_PREFIX_x86_64=x86_64-linux-android
+DEFAULT_ARCH_TOOLCHAIN_BINTOOLS_PREFIX_mips=mips64el-linux-android
+DEFAULT_ARCH_TOOLCHAIN_BINTOOLS_PREFIX_mips64=mips64el-linux-android
+
+# The list of default host NDK systems we support
+DEFAULT_SYSTEMS="linux-x86 windows darwin-x86"
+
+
+#added "armv7a" for ease of use while building and using toolchains
+# Return NDK ABI for a given architecture name
+# $1: Architecture name
+# Out: ABI name
+get_abi_for_arch ()
+{
+    local RET
+    case $1 in
+        arm)
+            RET="armeabi"
+            ;;
+        armv7a)
+            RET="armeabi-v7a"
+            ;;
+        arm64)
+            RET="arm64-v8a"
+            ;;
+        x86|x86_64|mips|mips64)
+            RET="$1"
+            ;;
+        mips32r6)
+            RET="mips"
+            ;;
+        *)
+            2> echo "ERROR: Unsupported architecture name: $1, use one of: arm armv7a arm64 x86 x86_64 mips mips64 mips32r6"
+            return 1
+            ;;
+    esac
+    echo "$RET"
+}
+
+# Return Toolchain ARCH for a given architecture name
+# $1: ARCH name
+# Out: ARCH name
+get_arch_for_toolchain ()
+{
+    local RET
+    case $1 in
+        arm|armv7a)
+            RET="arm"
+            ;;
+        arm64|x86|x86_64|mips|mips64)
+            RET="$1"
+            ;;
+        mips32r6)
+            RET="mips"
+            ;;
+        *)
+            2> echo "ERROR: Unsupported architecture name: $1, use one of: arm armv7a arm64 x86 x86_64 mips mips64 mips32r6"
+            return 1
+            ;;
+    esac
+    echo "$RET"
+}
+
+# Return toolchain name for given architecture and GCC version
+# $1: Architecture name (e.g. 'arm')
+# $2: optional, GCC version (e.g. '4.8')
+# Out: default arch-specific toolchain name (e.g. 'arm-linux-androideabi-$GCC_VERSION')
+# Return empty for unknown arch
+# Return with exit code "1" for invalid parameter count
+get_toolchain_name_for_arch ()
+{
+    if [[ $# -lt 1 ]] || [[ $# -gt 2 ]]; then
+        return 1
+    fi
+
+    if [ ! -z "$2" ] ; then
+        eval echo \"\${DEFAULT_ARCH_TOOLCHAIN_NAME_$1}-$2\"
+    else
+        eval echo \"\${DEFAULT_ARCH_TOOLCHAIN_NAME_$1}\"
+    fi
+}
+
+
+# Return the default toolchain program prefix for a given architecture
+# $1: Architecture name
+# Out: default arch-specific toolchain prefix (e.g. arm-linux-androideabi)
+# Return empty for unknown arch
+# Return with exit code "1" for invalid parameter count
+get_default_toolchain_prefix_for_arch ()
+{
+    if [[ $# -ne 1 ]]; then
+        return 1
+    fi
+
+    eval echo "\$DEFAULT_ARCH_TOOLCHAIN_PREFIX_$1"
+}
+
+# Return the default toolchain program compiler prefix for a given architecture
+# $1: Architecture name
+# $2: NDK major version
+# Out: default arch-specific toolchain compiler prefix (e.g. arm-linux-androideabi)
+# Return empty for unknown arch
+# Return with exit code "1" for invalid parameter count
+get_default_toolchain_compiler_prefix_for_arch ()
+{
+    if [[ $# -ne 2 ]]; then
+        return 1
+    fi
+
+    arch="$1"
+    if [[ "$1" == "armv7a" ]] &&  [ $2 -lt 19 ]; then
+        arch="arm"
+    fi
+    eval echo "\$DEFAULT_ARCH_TOOLCHAIN_COMPILER_PREFIX_$arch"
+}
+
+# Return the default toolchain program bintools prefix for a given architecture
+# $1: Architecture name
+# Out: default arch-specific toolchain bintools prefix (e.g. arm-linux-androideabi)
+# Return empty for unknown arch
+# Return with exit code "1" for invalid parameter count
+get_default_toolchain_bintools_prefix_for_arch ()
+{
+    if [[ $# -ne 1 ]]; then
+        return 1
+    fi
+    
+    eval echo "\$DEFAULT_ARCH_TOOLCHAIN_BINTOOLS_PREFIX_$1"
+}
+

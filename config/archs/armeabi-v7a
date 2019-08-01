@@ -1,0 +1,8 @@
+
+ARCH=armv7a
+API_LEVEL=21
+
+CPPFLAGS=""
+CFLAGS="-march=armv7-a -mfloat-abi=softfp -D__ANDROID_API__=$API_LEVEL"
+CXXFLAGS="-march=armv7-a -mfloat-abi=softfp -D__ANDROID_API__=$API_LEVEL"
+LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
