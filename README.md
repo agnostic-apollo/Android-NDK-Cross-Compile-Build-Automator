@@ -10,7 +10,7 @@ You supply it with path to an Android NDK. Any NDK version can be used (or atlea
 Then simply run the android_ndk_cross_compile_build_automator.sh script and it will automatically build the toolchains for each arch source file and API level set and then call the build file for each project after exporting the relevant compiler, bintools, target arch, API level and some other variables. The build file can update any additional project specific flags like CFLAGS, CXXFLAGS, LDFLAGS or any other flags or parameters and can call the relevant configure, make and make install commands to build the project. After builds of all projects of all arch source files are complete, then post build scripts can be run to process the built files.
 
 
-## Usage:
+## Usage Guide:
 
 - Install dependencies:
 	The following instructions are for Ubuntu. Will differ on other platforms. This project requires bash.
@@ -101,12 +101,10 @@ Set the variable values according to your needs.
 - Depending on you make commands the install directory should contain the files built. This project refers to the install directory as `INSTALL_DIR`. If you are using the same DESTDIR for the make install command as in the template then installed files will be at `$INSTALL_DIR/$PROJECT/$ARCH_SRC` for each PROJECT and ARCH_SRC.
 
 
-Currently tested by building fusermount for android. You can check it out [here]().
+Currently tested by building fusermount for android on Ubuntu 16.04 with NDK r15c and r20. You can check it out [here](https://github.com/agnostic-apollo/fuse).
 
-Credits:
-[libiconv](https://github.com/palmerc/libiconv)
-[Daniel Pocock](https://danielpocock.com/building-existing-autotools-c-projects-on-android)
-[jorgenpt](https://gist.github.com/jorgenpt/1961404)
-
-
+Credits:  
+[libiconv](https://github.com/palmerc/libiconv)  
+[Daniel Pocock](https://danielpocock.com/building-existing-autotools-c-projects-on-android)  
+[jorgenpt](https://gist.github.com/jorgenpt/1961404)  
 
