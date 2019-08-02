@@ -75,7 +75,14 @@ Set the variable values according to your needs.
 - Now modify `android_ndk_cross_compile_build.sh` of each project according to your requirements. Mainly the CPPFLAGS, CFLAGS, CXXFLAGS, LDFLAGS and command options to configure would need to be changed depending on each project. Read the `android_ndk_cross_compile_build.sh`, there is enough info in it to make appropriate changes.
 
 
-- Now optionally place any post build scripts you want to run after all the builds are complete in the post_build_scripts directory. Post build scripts can be used to extract the needed binaries and executables from the install directory. This project refers to the post_build_scripts directory as `POST_BUILD_SCRIPTS_DIR` and any files in it as `POST_BUILD_SCRIPT`.
+- Now optionally place any post build scripts you want to run after all the builds are complete in the post_build_scripts directory. Post build scripts can be used to extract the needed binaries and executables from the install directory. This project refers to the post_build_scripts directory as `POST_BUILD_SCRIPTS_DIR` and any files in it as `POST_BUILD_SCRIPT`. The directory structure should look like this:
+```
+- android_ndk_cross_compile_build_automator
+	- ...
+	- post_build_scripts/
+		- post_build_script1.sh
+		- post_build_script2.sh
+```
 
 
 - Then open `android_ndk_cross_compile_build_automator.sh`.
