@@ -23,11 +23,11 @@ ARCHS_SRC_TO_BUILD="armeabi armeabi-v7a arm64-v8a x86 x86-64"
 
 #set the space separated list of project directories in PROJECTS_DIR that you want to build
 #the root of each project directory must contain the BUILD_FILE_NAME file that build and installs the project
-#PROJECTS_TO_BUILD="fuse"
+#PROJECTS_TO_BUILD="fuse bindfs"
 PROJECTS_TO_BUILD=""
 
 #set the space separated list of post build scripts files in POST_BUILD_SCRIPTS_DIR that you want to run
-#POST_BUILD_SCRIPTS_TO_RUN="fusermount_extractor.sh"
+#POST_BUILD_SCRIPTS_TO_RUN="fusermount_extractor.sh bindfs_extractor.s"
 POST_BUILD_SCRIPTS_TO_RUN=""
 
 
@@ -351,22 +351,20 @@ trap cleanup EXIT
 #cd to PARENT_DIRECTORY before beginning build process
 cd "$PARENT_DIRECTORY"
 
-#for all ARCH_FILEs in the ARCHS_DIR
-for ARCH_FILE in "$ARCHS_DIR"/*; do
+
+#for all arch_srcs in the ARCHS_SRC_TO_BUILD
+for arch_src in $ARCHS_SRC_TO_BUILD; do
+	
+	ARCH_FILE="$ARCHS_DIR/$arch_src"
 
 	#if not a regular file, then skip
 	if [ ! -f "$ARCH_FILE" ]; then
+		echo "Skipping build for $arch_src since $ARCH_FILE file does not exist"
 		continue
 	fi
 
-	#get ARCH_SRC from basename of ARCH_FILE
-	export ARCH_SRC="$(basename "$ARCH_FILE")"
-
-	#if ARCH_SRC is not defined in the ARCHS_SRC_TO_BUILD, then skip
-	if [[ ! "$ARCHS_SRC_TO_BUILD" =~ (^|[[:space:]])"$ARCH_SRC"($|[[:space:]]) ]]; then
-		echo "Skipping build for $ARCH_SRC"
-		continue
-	fi
+	#set ARCH_SRC to arch_src
+	export ARCH_SRC="$arch_src"
 
 	#cd to PARENT_DIRECTORY before building for each ARCH_SRC
 	cd "$PARENT_DIRECTORY"
@@ -653,26 +651,21 @@ for ARCH_FILE in "$ARCHS_DIR"/*; do
 		continue
 	fi
 
-	#for all PROJECT_DIRs in the BUILD_DIR
-	for PROJECT_DIR in "$BUILD_DIR"/*; do
-
+	#for all projects in the PROJECTS_TO_BUILD
+ 	for project in $PROJECTS_TO_BUILD; do
+		
+		PROJECT_DIR="$BUILD_DIR/$project"
+		
 		#if not a directory, then skip
 		if [ ! -d "$PROJECT_DIR" ]; then
+			echo "Skipping build for $project since $PROJECT_DIR directory does not exist"
 			continue
 		fi
 
-		#get PROJECT from basename of PROJECT_DIR
-		export PROJECT="$(basename "$PROJECT_DIR")"
+		#set PROJECT to current_project
+		export PROJECT="$project"
 
 		echo -e "\n\n\n\n\n"
-		echo "Processing $PROJECT"
-
-		#if PROJECT is not defined in the PROJECTS_TO_BUILD, then skip
-		if [[ ! "$PROJECTS_TO_BUILD" =~ (^|[[:space:]])"$PROJECT"($|[[:space:]]) ]]; then
-			echo "Skipping build for $PROJECT"
-			continue
-		fi
-	
 		echo "Building $PROJECT for $ARCH_SRC"
 
 		#cd to BUILD_DIR
@@ -731,29 +724,24 @@ if [ $ONLY_BUILD_TOOLCHAINS -eq 1 ]; then
 	exit
 fi
 
-
 #if post build scripts need to run
 if [ $RUN_POST_BUILD_SCRIPTS -eq 1 ]; then
 
-	#for all POST_BUILD_SCRIPT_FILEs in the POST_BUILD_SCRIPTS_DIR
-	for POST_BUILD_SCRIPT_FILE in "$POST_BUILD_SCRIPTS_DIR"/*; do
+	#for all post_build_scripts in the POST_BUILD_SCRIPTS_TO_RUN
+ 	for post_build_script in $POST_BUILD_SCRIPTS_TO_RUN; do
+		
+		POST_BUILD_SCRIPT_FILE="$POST_BUILD_SCRIPTS_DIR/$post_build_script"
 		
 		#if not a file, then skip
 		if [ ! -f "$POST_BUILD_SCRIPT_FILE" ]; then
+			echo "Skipping run for $post_build_script since $POST_BUILD_SCRIPT_FILE file does not exist"
 			continue
 		fi
 
-		#get POST_BUILD_SCRIPT from basename of POST_BUILD_SCRIPT_FILE
-		POST_BUILD_SCRIPT="$(basename "$POST_BUILD_SCRIPT_FILE")"
+		#set POST_BUILD_SCRIPT to post_build_script
+		POST_BUILD_SCRIPT="$post_build_script"
 
 		echo -e "\n\n\n\n\n"
-		echo "Processing $POST_BUILD_SCRIPT"
-
-		#if POST_BUILD_SCRIPT is not defined in the POST_BUILD_SCRIPTS_TO_RUN, then skip
-		if [[ ! "$POST_BUILD_SCRIPTS_TO_RUN" =~ (^|[[:space:]])"$POST_BUILD_SCRIPT"($|[[:space:]]) ]]; then
-			echo "Skipping run for $POST_BUILD_SCRIPT"
-			continue
-		fi
 
 		#cd to POST_BUILD_SCRIPTS_DIR before running script
 		cd "$POST_BUILD_SCRIPTS_DIR"
