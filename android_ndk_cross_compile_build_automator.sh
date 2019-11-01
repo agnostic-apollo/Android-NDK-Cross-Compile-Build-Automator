@@ -662,7 +662,7 @@ for arch_src in $ARCHS_SRC_TO_BUILD; do
 			continue
 		fi
 
-		#set PROJECT to current_project
+		#set PROJECT to project
 		export PROJECT="$project"
 
 		echo -e "\n\n\n\n\n"
